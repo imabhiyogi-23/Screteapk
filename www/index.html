@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0c">
+<title>Rahasya Vault — Swalavya Studio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230a0a0c'/%3E%3Cpath d='M50 20a18 18 0 0 0-18 18v8h-4a4 4 0 0 0-4 4v26a4 4 0 0 0 4 4h44a4 4 0 0 0 4-4V50a4 4 0 0 0-4-4h-4v-8a18 18 0 0 0-18-18zm0 8a10 10 0 0 1 10 10v8H40v-8a10 10 0 0 1 10-10z' fill='%23ea1b2d'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{
+  --bg:#0a0a0c;
+  --panel:#141417;
+  --panel-2:#1c1c20;
+  --line:#2a2a30;
+  --ink:#f2f0ed;
+  --muted:#8a8a93;
+  --crimson:#ea1b2d;
+  --crimson-dim:#7a1019;
+  --gold:#c9a24b;
+  --ok:#3fa66a;
+  --radius:14px;
+  --font-display:'Avenir Next',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --font-mono:ui-monospace,'SF Mono','Roboto Mono','Cascadia Code',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font-body);overscroll-behavior:none;}
+body{-webkit-user-select:none;user-select:none;overflow:hidden;}
+input,textarea{-webkit-user-select:text;user-select:text;}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+::-webkit-scrollbar{width:0;height:0;}
+
+/* ---------- Screens ---------- */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ---------- Lock Screen ---------- */
+#lockScreen{
+  background:radial-gradient(circle at 50% 30%, #17171b 0%, #0a0a0c 70%);
+  align-items:center;justify-content:center;padding:24px;
+}
+.lock-wrap{width:100%;max-width:340px;text-align:center;}
+.lock-emblem{
+  width:64px;height:64px;margin:0 auto 18px;border-radius:16px;
+  background:linear-gradient(155deg,var(--panel-2),var(--panel));
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+}
+.lock-title{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:0.2px;margin:0 0 2px;}
+.lock-sub{color:var(--muted);font-size:13px;margin:0 0 28px;}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:26px;height:16px;}
+.pin-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--line);transition:all .15s ease;}
+.pin-dot.filled{background:var(--crimson);border-color:var(--crimson);transform:scale(1.05);}
+.pin-dot.shake-err{border-color:var(--crimson);}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:280px;margin:0 auto;}
+.key{
+  aspect-ratio:1;border-radius:50%;background:var(--panel);border:1px solid var(--line);
+  font-family:var(--font-mono);font-size:22px;font-weight:500;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;transition:background .1s;
+}
+.key:active{background:var(--panel-2);}
+.key.ghost{background:transparent;border:none;}
+.key.func{color:var(--muted);font-size:13px;font-family:var(--font-body);}
+.lock-msg{margin-top:18px;font-size:12.5px;color:var(--crimson);min-height:16px;font-family:var(--font-mono);}
+.lock-toggle{margin-top:30px;font-size:12.5px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;}
+.shake{animation:shakeAnim .35s;}
+@keyframes shakeAnim{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-8px)}40%,60%{transform:translateX(8px)}}
+
+/* ---------- Setup screen ---------- */
+#setupScreen{background:var(--bg);align-items:center;justify-content:center;padding:24px;}
+.setup-wrap{width:100%;max-width:360px;}
+.setup-wrap .lock-emblem{margin-bottom:16px;}
+.setup-wrap h1{font-family:var(--font-display);font-size:24px;margin:0 0 6px;text-align:center;}
+.setup-wrap p.lead{color:var(--muted);font-size:13.5px;text-align:center;margin:0 0 30px;line-height:1.5;}
+.field-label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block;font-family:var(--font-mono);text-transform:lowercase;}
+.pin-input-row{display:flex;gap:8px;margin-bottom:20px;}
+.pin-box{
+  flex:1;aspect-ratio:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:20px;
+}
+.setup-hidden-input{position:absolute;opacity:0;pointer-events:none;}
+.btn-primary{
+  width:100%;padding:16px;border-radius:12px;background:var(--crimson);color:#fff;
+  font-family:var(--font-display);font-weight:600;font-size:15px;margin-top:8px;
+  transition:opacity .15s;
+}
+.btn-primary:disabled{opacity:.35;}
+.btn-primary:active{opacity:.8;}
+.setup-note{font-size:11.5px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.5;}
+
+/* ---------- Main App Shell ---------- */
+#mainScreen{background:var(--bg);}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 12px;
+  background:var(--bg);border-bottom:1px solid var(--line);flex-shrink:0;
+}
+.topbar h1{font-family:var(--font-display);font-size:19px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px;}
+.topbar h1 .dot{width:7px;height:7px;border-radius:50%;background:var(--crimson);}
+.topbar-actions{display:flex;gap:14px;align-items:center;}
+.icon-btn{width:34px;height:34px;border-radius:10px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;}
+.icon-btn:active{background:var(--panel-2);}
+
+.search-bar{padding:10px 18px;flex-shrink:0;background:var(--bg);}
+.search-input-wrap{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 12px;}
+.search-input-wrap input{background:none;border:none;color:var(--ink);font-size:14px;width:100%;outline:none;font-family:var(--font-body);}
+.search-input-wrap input::placeholder{color:var(--muted);}
+
+.album-chips{display:flex;gap:8px;padding:0 18px 12px;overflow-x:auto;flex-shrink:0;}
+.chip{
+  padding:7px 14px;border-radius:20px;background:var(--panel);border:1px solid var(--line);
+  font-size:12.5px;color:var(--muted);white-space:nowrap;flex-shrink:0;font-family:var(--font-mono);
+}
+.chip.active{background:var(--crimson);color:#fff;border-color:var(--crimson);}
+.chip.add-chip{color:var(--gold);border-color:var(--crimson-dim);}
+
+.content-scroll{flex:1;overflow-y:auto;padding:4px 18px 100px;}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.tile{
+  position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--panel);
+  border:1px solid var(--line);
+}
+.tile img,.tile video{width:100%;height:100%;object-fit:cover;display:block;}
+.tile .vid-badge{
+  position:absolute;bottom:5px;right:5px;background:rgba(10,10,12,0.7);border-radius:6px;
+  padding:2px 5px;font-size:9px;color:#fff;font-family:var(--font-mono);display:flex;align-items:center;gap:2px;
+}
+.tile .placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);}
+.tile.selected::after{content:'';position:absolute;inset:0;background:rgba(234,27,45,0.35);border:2px solid var(--crimson);border-radius:10px;}
+.tile .sel-check{
+  position:absolute;top:5px;left:5px;width:20px;height:20px;border-radius:50%;
+  background:rgba(10,10,12,0.6);border:1.5px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;z-index:2;
+}
+.tile.selected .sel-check{background:var(--crimson);border-color:var(--crimson);}
+
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 30px 30px;text-align:center;}
+.empty-state .emblem{width:56px;height:56px;border-radius:14px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+.empty-state h3{font-family:var(--font-display);font-size:17px;margin:0 0 6px;}
+.empty-state p{color:var(--muted);font-size:13.5px;line-height:1.5;margin:0;max-width:260px;}
+
+/* Bottom nav */
+.bottom-nav{
+  position:fixed;left:0;right:0;bottom:0;background:rgba(20,20,23,0.92);backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;
+  padding:10px 10px calc(env(safe-area-inset-bottom,0px) + 10px);z-index:20;
+}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);font-size:10.5px;font-family:var(--font-mono);flex:1;padding:4px;}
+.nav-btn.active{color:var(--crimson);}
+.nav-btn .fab{
+  width:52px;height:52px;border-radius:50%;background:var(--crimson);display:flex;align-items:center;justify-content:center;
+  margin-top:-30px;box-shadow:0 4px 16px rgba(234,27,45,0.4);border:4px solid var(--bg);
+}
+
+/* ---------- Viewer (photo/video) ---------- */
+#viewerScreen{background:#000;z-index:50;}
+.viewer-top{
+  position:absolute;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:center;
+  padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 30px;
+  background:linear-gradient(180deg,rgba(0,0,0,0.75),transparent);
+}
+.viewer-title{font-size:12.5px;color:#fff;font-family:var(--font-mono);opacity:0.85;text-align:center;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 10px;}
+.viewer-icon-btn{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;}
+.viewer-stage{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.viewer-stage img{max-width:100%;max-height:100%;object-fit:contain;touch-action:none;transition:transform .05s linear;}
+.viewer-nav-btn{
+  position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;
+  background:rgba(0,0,0,0.4);color:#fff;display:flex;align-items:center;justify-content:center;z-index:4;
+}
+.viewer-nav-btn.prev{left:10px;}
+.viewer-nav-btn.next{right:10px;}
+.viewer-bottom{
+  position:absolute;bottom:0;left:0;right:0;z-index:5;padding:20px 18px calc(env(safe-area-inset-bottom,0px) + 20px);
+  background:linear-gradient(0deg,rgba(0,0,0,0.75),transparent);display:flex;justify-content:space-around;
+}
+.viewer-action{display:flex;flex-direction:column;align-items:center;gap:5px;color:#fff;font-size:10.5px;font-family:var(--font-mono);}
+
+/* Video player */
+.video-wrap{width:100%;height:100%;position:relative;display:flex;align-items:center;justify-content:center;background:#000;}
+.video-wrap video{width:100%;height:100%;object-fit:contain;}
+.vid-controls{
+  position:absolute;bottom:0;left:0;right:0;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 16px);
+  background:linear-gradient(0deg,rgba(0,0,0,0.8),transparent);z-index:5;
+}
+.vid-seek{width:100%;-webkit-appearance:none;height:3px;border-radius:3px;background:rgba(255,255,255,0.25);outline:none;margin-bottom:10px;}
+.vid-seek::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--crimson);}
+.vid-seek-fill{height:100%;background:var(--crimson);border-radius:3px;}
+.vid-time-row{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10.5px;color:rgba(255,255,255,0.7);margin-bottom:8px;margin-top:-4px;}
+.vid-btn-row{display:flex;align-items:center;justify-content:space-between;}
+.vid-btn-group{display:flex;align-items:center;gap:18px;}
+.vid-btn{color:#fff;display:flex;align-items:center;justify-content:center;}
+.vid-play-center{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;
+  background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:#fff;z-index:3;
+}
+.speed-badge{font-family:var(--font-mono);font-size:11px;color:#fff;background:rgba(255,255,255,0.12);padding:4px 8px;border-radius:8px;}
+
+/* ---------- Modals / sheets ---------- */
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:60;display:none;align-items:flex-end;}
+.sheet-overlay.active{display:flex;}
+.sheet{width:100%;background:var(--panel);border-radius:20px 20px 0 0;padding:8px 20px calc(env(safe-area-inset-bottom,0px) + 20px);max-height:82vh;overflow-y:auto;}
+.sheet-handle{width:36px;height:4px;border-radius:3px;background:var(--line);margin:8px auto 16px;}
+.sheet h3{font-family:var(--font-display);font-size:17px;margin:0 0 16px;}
+.sheet-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);}
+.sheet-row:last-child{border-bottom:none;}
+.sheet-row .icon-circle{width:38px;height:38px;border-radius:50%;background:var(--panel-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sheet-row .label{flex:1;font-size:14.5px;}
+.sheet-row .label .sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.sheet-row.danger .label{color:var(--crimson);}
+.sheet input[type=text],.sheet input[type=password],.sheet select{
+  width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+  color:var(--ink);font-size:14.5px;font-family:var(--font-body);outline:none;margin-bottom:12px;
+}
+.sheet-btn-row{display:flex;gap:10px;margin-top:8px;}
+.sheet-btn{flex:1;padding:13px;border-radius:10px;font-family:var(--font-display);font-weight:600;font-size:14px;text-align:center;}
+.sheet-btn.primary{background:var(--crimson);color:#fff;}
+.sheet-btn.ghost{background:var(--panel-2);color:var(--ink);border:1px solid var(--line);}
+.add-sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;}
+.add-opt{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:22px 10px;
+  display:flex;flex-direction:column;align-items:center;gap:10px;font-size:13px;
+}
+
+.toast{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--line);
+  color:var(--ink);padding:11px 18px;border-radius:10px;font-size:13px;z-index:100;opacity:0;transition:opacity .25s,transform .25s;
+  pointer-events:none;font-family:var(--font-mono);white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+
+.progress-overlay{position:fixed;inset:0;background:rgba(10,10,12,0.92);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.progress-overlay.active{display:flex;}
+.spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--crimson);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.progress-text{font-family:var(--font-mono);font-size:13px;color:var(--muted);}
+.progress-bar-track{width:200px;height:4px;background:var(--panel);border-radius:3px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:var(--crimson);width:0%;transition:width .2s;}
+
+input[type=file]{display:none;}
+.hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ SETUP SCREEN ============ -->
+  <div class="screen active" id="setupScreen">
+    <div class="setup-wrap">
+      <div class="lock-emblem" style="margin:0 auto 16px;">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm0 2a3 3 0 0 1 3 3v3H9V7a3 3 0 0 1 3-3z" fill="#ea1b2d"/></svg>
+      </div>
+      <h1>Rahasya Vault</h1>
+      <p class="lead">Your photos and videos, encrypted on this device only. Nothing ever leaves your browser. Set a PIN to seal the vault.</p>
+      <span class="field-label">create a 4–8 digit pin</span>
+      <div class="pin-input-row" id="setupPinRow"></div>
+      <span class="field-label">confirm pin</span>
+      <div class="pin-input-row" id="setupPinRow2"></div>
+      <input class="setup-hidden-input" id="setupHiddenInput" type="tel" inputmode="numeric" maxlength="8">
+      <button class="btn-primary" id="setupSubmitBtn" disabled>Seal the vault</button>
+      <p class="setup-note">If you forget this PIN, your media cannot be recovered. There is no backdoor — that's the point.</p>
+    </div>
+  </div>
+
+  <!-- ============ LOCK SCREEN ============ -->
+  <div class="screen" id="lockScreen">
+    <div class="lock-wrap">
+      <div class="lock-emblem">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm0 2a3 3 0 0 1 3 3v3H9V7a3 3 0 0 1 3-3z" fill="#ea1b2d"/></svg>
+      </div>
+      <h2 class="lock-title">Rahasya Vault</h2>
+      <p class="lock-sub" id="lockSub">Enter your PIN</p>
+      <div class="pin-dots" id="pinDots"></div>
+      <div class="keypad" id="keypad"></div>
+      <div class="lock-msg" id="lockMsg"></div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN SCREEN ============ -->
+  <div class="screen" id="mainScreen">
+    <div class="topbar">
+      <h1><span class="dot"></span> Rahasya</h1>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="selectModeBtn" title="Select">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3 8-8M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="#f2f0ed" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="icon-btn" id="lockNowBtn" title="Lock">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm0 2a3 3 0 0 1 3 3v3H9V7a3 3 0 0 1 3-3z" fill="#f2f0ed"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#8a8a93" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="#8a8a93" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input type="text" id="searchInput" placeholder="Search your vault">
+      </div>
+    </div>
+
+    <div class="album-chips" id="albumChips"></div>
+
+    <div class="content-scroll" id="contentScroll">
+      <div class="grid" id="grid"></div>
+      <div class="empty-state hidden" id="emptyState">
+        <div class="emblem"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 16l4.5-6 3.5 4.5 2.5-3L20 16" stroke="#8a8a93" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="4" width="18" height="16" rx="2" stroke="#8a8a93" stroke-width="1.6"/></svg></div>
+        <h3>Nothing hidden here yet</h3>
+        <p>Tap the + button to bring photos and videos into your vault. They're encrypted the moment they arrive.</p>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn active" data-nav="gallery">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
+        gallery
+      </button>
+      <button class="nav-btn" id="addFab">
+        <div class="fab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+      </button>
+      <button class="nav-btn" data-nav="settings">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="1.3"/></svg>
+        settings
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS SCREEN ============ -->
+  <div class="screen" id="settingsScreen">
+    <div class="topbar">
+      <h1>Settings</h1>
+      <button class="icon-btn" id="settingsBackBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#f2f0ed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="content-scroll" style="padding-top:14px;">
+      <div style="background:var(--panel);border-radius:14px;border:1px solid var(--line);margin-bottom:16px;padding:0 16px;">
+        <div class="sheet-row" id="statItemsRow">
+          <div class="icon-circle"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#8a8a93" stroke-width="1.6"/></svg></div>
+          <div class="label">Items in vault<div class="sub" id="statItems">0 photos · 0 videos</div></div>
+        </div>
+        <div class="sheet-row">
+          <div class="icon-circle"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M2 12h20" stroke="#8a8a93" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <div class="label">Storage used<div class="sub" id="statSize">0 MB</div></div>
+        </div>
+      </div>
+
+      <div style="background:var(--panel);border-radius:14px;border:1px solid var(--line);margin-bottom:16px;padding:0 16px;">
+        <button class="sheet-row" id="changePinBtn" style="width:100%;text-align:left;background:none;">
+          <div class="icon-circle"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5z" stroke="#8a8a93" stroke-width="1.5"/></svg></div>
+          <div class="label">Change PIN<div class="sub">Re-encrypts everything in your vault</div></div>
+        </button>
+        <button class="sheet-row" id="autoLockBtn" style="width:100%;text-align:left;background:none;">
+          <div class="icon-circle"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#8a8a93" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="#8a8a93" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <div class="label">Auto-lock<div class="sub" id="autoLockSub">After 1 minute idle</div></div>
+        </button>
+        <button class="sheet-row" id="manageAlbumsBtn" style="width:100%;text-align:left;background:none;">
+          <div class="icon-circle"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" stroke="#8a8a93" stroke-width="1.5"/></svg></div>
+          <div class="label">Manage albums<div class="sub" id="albumCountSub">1 album</div></div>
+        </button>
+      </div>
+
+      <div style="background:var(--panel);border-radius:14px;border:1px solid var(--line);margin-bottom:16px;padding:0 16px;">
+        <button class="sheet-row" id="exportBtn" style="width:100%;text-align:left;background:none;">
+          <div class="icon-circle"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#8a8a93" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="label">Export encrypted backup<div class="sub">Saves a .rahasya file, still needs your PIN</div></div>
+        </button>
+        <button class="sheet-row" id="importBtn" style="width:100%;text-align:left;background:none;">
+          <div class="icon-circle"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 21V9m0 0l-4 4m4-4l4 4M4 7V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2" stroke="#8a8a93" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="label">Import backup<div class="sub">Merge a .rahasya file into this vault</div></div>
+        </button>
+      </div>
+
+      <div style="background:var(--panel);border-radius:14px;border:1px solid var(--crimson-dim);margin-bottom:24px;padding:0 16px;">
+        <button class="sheet-row danger" id="wipeBtn" style="width:100%;text-align:left;background:none;">
+          <div class="icon-circle"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0v13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7" stroke="#ea1b2d" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <div class="label">Erase entire vault<div class="sub" style="color:var(--muted)">Deletes everything, permanently</div></div>
+        </button>
+      </div>
+      <p style="text-align:center;color:var(--muted);font-size:11.5px;font-family:var(--font-mono);padding-bottom:20px;">Rahasya Vault · Swalavya Studio · fully offline</p>
+    </div>
+  </div>
+
+  <!-- ============ VIEWER SCREEN ============ -->
+  <div class="screen" id="viewerScreen">
+    <div class="viewer-top">
+      <button class="viewer-icon-btn" id="viewerCloseBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <div class="viewer-title" id="viewerTitle"></div>
+      <button class="viewer-icon-btn" id="viewerMoreBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="1.6" fill="#fff"/><circle cx="12" cy="12" r="1.6" fill="#fff"/><circle cx="12" cy="19" r="1.6" fill="#fff"/></svg></button>
+    </div>
+    <div class="viewer-stage" id="viewerStage"></div>
+    <div class="viewer-bottom" id="viewerBottom">
+      <button class="viewer-action" id="viewerDownloadBtn"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>save</button>
+      <button class="viewer-action" id="viewerRotateBtn"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M2 12a10 10 0 1 1 3 7.1" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M2 20v-6h6" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>rotate</button>
+      <button class="viewer-action" id="viewerMoveBtn"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" stroke="#fff" stroke-width="1.7"/></svg>album</button>
+      <button class="viewer-action" id="viewerDeleteBtn"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0v13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7" stroke="#ea1b2d" stroke-width="1.7" stroke-linecap="round"/></svg><span style="color:var(--crimson)">delete</span></button>
+    </div>
+  </div>
+
+  <!-- ============ SELECTION ACTION BAR ============ -->
+  <div class="bottom-nav hidden" id="selectionBar" style="justify-content:space-around;">
+    <button class="nav-btn" id="selCancelBtn">cancel</button>
+    <button class="nav-btn" id="selMoveBtn">move</button>
+    <button class="nav-btn" id="selDeleteBtn" style="color:var(--crimson)">delete</button>
+  </div>
+
+  <!-- ============ ADD SHEET ============ -->
+  <div class="sheet-overlay" id="addSheetOverlay">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <h3>Add to vault</h3>
+      <div class="add-sheet-grid">
+        <button class="add-opt" id="addPhotoOpt">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 16l4.5-6 3.5 4.5 2.5-3L20 16" stroke="#ea1b2d" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="4" width="18" height="16" rx="2" stroke="#ea1b2d" stroke-width="1.7"/></svg>
+          Photos
+        </button>
+        <button class="add-opt" id="addVideoOpt">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="15" height="14" rx="2" stroke="#ea1b2d" stroke-width="1.7"/><path d="M17 9.5l5-3v11l-5-3" stroke="#ea1b2d" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          Videos
+        </button>
+      </div>
+      <span class="field-label" style="margin-top:10px;display:block;">add to album</span>
+      <select id="addAlbumSelect"></select>
+      <button class="sheet-btn ghost" id="addCancelBtn" style="width:100%;">Cancel</button>
+    </div>
+  </div>
+  <input type="file" id="photoInput" accept="image/*" multiple>
+  <input type="file" id="videoInput" accept="video/*" multiple>
+
+  <!-- ============ GENERIC SHEET (album create / move / pin change / auto-lock) ============ -->
+  <div class="sheet-overlay" id="genericSheetOverlay">
+    <div class="sheet" id="genericSheetContent"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="progress-overlay" id="progressOverlay">
+    <div class="spinner"></div>
+    <div class="progress-text" id="progressText">Encrypting…</div>
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progressBarFill"></div></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================================
+   RAHASYA VAULT — offline encrypted photo/video vault
+   All media is encrypted client-side with AES-GCM (key derived via PBKDF2
+   from the user's PIN) and stored in IndexedDB. Nothing is ever transmitted.
+   ========================================================================= */
+
+const DB_NAME = 'rahasya_vault_db';
+const DB_VERSION = 1;
+const STORE_META = 'meta';
+const STORE_ITEMS = 'items';
+
+let db = null;
+let cryptoKey = null;          // live AES-GCM CryptoKey, cleared on lock
+let itemsCache = [];           // decrypted metadata (not the media itself)
+let currentAlbum = 'All';
+let searchTerm = '';
+let selectMode = false;
+let selectedIds = new Set();
+let viewerList = [];           // list of item objects currently viewable (photo/video filtered)
+let viewerIndex = -1;
+let currentObjectURLs = [];    // track for revocation
+let autoLockMs = 60000;
+let idleTimer = null;
+let pinBuffer = '';
+let setupPinStage = 1;
+let setupPin1 = '';
+
+/* ---------------- IndexedDB helpers ---------------- */
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e)=>{
+      const d = e.target.result;
+      if(!d.objectStoreNames.contains(STORE_META)) d.createObjectStore(STORE_META,{keyPath:'key'});
+      if(!d.objectStoreNames.contains(STORE_ITEMS)) d.createObjectStore(STORE_ITEMS,{keyPath:'id'});
+    };
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+function tx(storeName, mode){ return db.transaction(storeName, mode).objectStore(storeName); }
+function idbGet(store, key){ return new Promise((res,rej)=>{ const r=tx(store,'readonly').get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+function idbPut(store, val){ return new Promise((res,rej)=>{ const r=tx(store,'readwrite').put(val); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+function idbDelete(store, key){ return new Promise((res,rej)=>{ const r=tx(store,'readwrite').delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+function idbAll(store){ return new Promise((res,rej)=>{ const out=[]; const r=tx(store,'readonly').openCursor(); r.onsuccess=(e)=>{ const c=e.target.result; if(c){ out.push(c.value); c.continue(); } else res(out); }; r.onerror=()=>rej(r.error); }); }
+function idbClear(store){ return new Promise((res,rej)=>{ const r=tx(store,'readwrite').clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+
+/* ---------------- Crypto helpers ---------------- */
+function randBytes(n){ return crypto.getRandomValues(new Uint8Array(n)); }
+function buf2b64(buf){
+  const bytes = new Uint8Array(buf);
+  let bin=''; for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function b642buf(b64){
+  const bin = atob(b64); const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  return bytes.buffer;
+}
+async function deriveKey(pin, saltBytes){
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(pin), {name:'PBKDF2'}, false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt:saltBytes, iterations:150000, hash:'SHA-256' },
+    baseKey,
+    { name:'AES-GCM', length:256 },
+    true,
+    ['encrypt','decrypt']
+  );
+}
+async function encryptBytes(arrayBuffer){
+  const iv = randBytes(12);
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, cryptoKey, arrayBuffer);
+  return { iv: buf2b64(iv), data: buf2b64(ct) };
+}
+async function decryptBytes(ivB64, dataB64){
+  const iv = new Uint8Array(b642buf(ivB64));
+  const data = b642buf(dataB64);
+  return crypto.subtle.decrypt({name:'AES-GCM', iv}, cryptoKey, data);
+}
+async function encryptText(str){
+  const enc = new TextEncoder();
+  return encryptBytes(enc.encode(str).buffer);
+}
+async function decryptText(ivB64, dataB64){
+  const buf = await decryptBytes(ivB64, dataB64);
+  return new TextDecoder().decode(buf);
+}
+
+/* ---------------- Utility ---------------- */
+function uid(){ return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2,9); }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function fmtBytes(n){
+  if(n < 1024) return n+' B';
+  if(n < 1024*1024) return (n/1024).toFixed(1)+' KB';
+  return (n/(1024*1024)).toFixed(1)+' MB';
+}
+function fmtTime(sec){
+  if(!isFinite(sec)) return '0:00';
+  const m = Math.floor(sec/60); const s = Math.floor(sec%60);
+  return m+':'+String(s).padStart(2,'0');
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function releaseObjectURLs(){
+  currentObjectURLs.forEach(u=>URL.revokeObjectURL(u));
+  currentObjectURLs = [];
+}
+
+/* ---------------- Setup flow (first run) ---------------- */
+function buildPinRow(container, count, filled){
+  container.innerHTML = '';
+  for(let i=0;i<8;i++){
+    const box = document.createElement('div');
+    box.className = 'pin-box';
+    box.style.display = i < 8 ? 'flex' : 'none';
+    box.textContent = i < filled ? '•' : '';
+    container.appendChild(box);
+  }
+}
+function renderSetupBoxes(){
+  buildPinRow(document.getElementById('setupPinRow'), 8, setupPinStage===1 ? pinBuffer.length : (setupPin1 ? setupPin1.length : 0));
+  const row2 = document.getElementById('setupPinRow2');
+  row2.innerHTML='';
+  for(let i=0;i<8;i++){
+    const box=document.createElement('div'); box.className='pin-box';
+    box.textContent = (setupPinStage===2 && i<pinBuffer.length) ? '•' : '';
+    row2.appendChild(box);
+  }
+}
+function initSetupInput(){
+  const hidden = document.getElementById('setupHiddenInput');
+  document.querySelector('.setup-wrap').addEventListener('click', ()=>hidden.focus());
+  hidden.focus();
+  hidden.addEventListener('input', ()=>{
+    pinBuffer = hidden.value.replace(/[^0-9]/g,'').slice(0,8);
+    hidden.value = pinBuffer;
+    renderSetupBoxes();
+    document.getElementById('setupSubmitBtn').disabled = pinBuffer.length < 4;
+  });
+  document.getElementById('setupSubmitBtn').addEventListener('click', async ()=>{
+    if(setupPinStage===1){
+      if(pinBuffer.length<4){ toast('PIN must be at least 4 digits'); return; }
+      setupPin1 = pinBuffer;
+      pinBuffer='';
+      setupPinStage=2;
+      document.getElementById('setupHiddenInput').value='';
+      document.getElementById('setupSubmitBtn').disabled = true;
+      document.getElementById('setupSubmitBtn').textContent='Confirm & seal';
+      renderSetupBoxes();
+      toast('Now confirm your PIN');
+    } else {
+      if(pinBuffer !== setupPin1){
+        toast('PINs did not match — try again');
+        setupPinStage=1; setupPin1=''; pinBuffer='';
+        document.getElementById('setupHiddenInput').value='';
+        document.getElementById('setupSubmitBtn').textContent='Seal the vault';
+        document.getElementById('setupSubmitBtn').disabled = true;
+        renderSetupBoxes();
+        return;
+      }
+      await completeSetup(setupPin1);
+    }
+  });
+  renderSetupBoxes();
+}
+async function completeSetup(pin){
+  showProgress('Sealing your vault…');
+  const salt = randBytes(16);
+  cryptoKey = await deriveKey(pin, salt);
+  const verifier = await encryptText('rahasya-ok');
+  await idbPut(STORE_META, {key:'salt', value: buf2b64(salt)});
+  await idbPut(STORE_META, {key:'verifier', value: verifier});
+  await idbPut(STORE_META, {key:'albums', value: ['All']});
+  await idbPut(STORE_META, {key:'autoLockMs', value: 60000});
+  await idbPut(STORE_META, {key:'pinLength', value: pin.length});
+  hideProgress();
+  toast('Vault sealed. Welcome in.');
+  await enterMainApp();
+}
+
+/* ---------------- Lock screen flow ---------------- */
+function renderKeypad(){
+  const keypad = document.getElementById('keypad');
+  keypad.innerHTML='';
+  const keys = ['1','2','3','4','5','6','7','8','9','','0','del'];
+  keys.forEach(k=>{
+    const btn = document.createElement('button');
+    if(k===''){ btn.className='key ghost'; }
+    else if(k==='del'){
+      btn.className='key func';
+      btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 6l-6 6 6 6h11a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H9z" stroke="#8a8a93" stroke-width="1.6" stroke-linejoin="round"/><path d="M13 10l4 4m0-4l-4 4" stroke="#8a8a93" stroke-width="1.6" stroke-linecap="round"/></svg>';
+      btn.addEventListener('click', ()=>{ pinBuffer = pinBuffer.slice(0,-1); renderPinDots(); });
+    } else {
+      btn.className='key'; btn.textContent=k;
+      btn.addEventListener('click', ()=>onKeyPress(k));
+    }
+    keypad.appendChild(btn);
+  });
+}
+function renderPinDots(){
+  const wrap = document.getElementById('pinDots');
+  wrap.innerHTML='';
+  const len = Math.max(pinBuffer.length, 4);
+  for(let i=0;i<Math.max(len,pinBuffer.length);i++){
+    const d = document.createElement('div');
+    d.className = 'pin-dot' + (i<pinBuffer.length ? ' filled':'');
+    wrap.appendChild(d);
+  }
+}
+let storedPinLength = null;
+async function loadPinLength(){
+  const row = await idbGet(STORE_META,'pinLength');
+  storedPinLength = row ? row.value : null;
+}
+async function onKeyPress(k){
+  if(pinBuffer.length>=8) return;
+  pinBuffer += k;
+  renderPinDots();
+  if(storedPinLength){
+    // We know exactly how many digits the PIN has — only attempt once that many are entered.
+    if(pinBuffer.length === storedPinLength){
+      tryUnlock();
+    }
+  } else {
+    // Fallback for older vaults created before PIN length was recorded: wait for a pause.
+    if(pinBuffer.length>=4){
+      clearTimeout(onKeyPress._t);
+      onKeyPress._t = setTimeout(tryUnlock, 600);
+    }
+  }
+}
+async function tryUnlock(){
+  if(pinBuffer.length<4) return;
+  const saltRow = await idbGet(STORE_META,'salt');
+  const verifierRow = await idbGet(STORE_META,'verifier');
+  if(!saltRow || !verifierRow){ document.getElementById('lockMsg').textContent='Vault data missing.'; return; }
+  const salt = new Uint8Array(b642buf(saltRow.value));
+  const candidateKey = await deriveKey(pinBuffer, salt);
+  const prevKey = cryptoKey;
+  cryptoKey = candidateKey;
+  try{
+    const check = await decryptText(verifierRow.value.iv, verifierRow.value.data);
+    if(check === 'rahasya-ok'){
+      document.getElementById('lockMsg').textContent='';
+      if(!storedPinLength){
+        storedPinLength = pinBuffer.length;
+        await idbPut(STORE_META, {key:'pinLength', value: storedPinLength});
+      }
+      pinBuffer='';
+      await enterMainApp();
+      return;
+    }
+    throw new Error('mismatch');
+  }catch(err){
+    cryptoKey = prevKey;
+    document.getElementById('lockMsg').textContent = 'Incorrect PIN';
+    const wrap = document.querySelector('.lock-wrap');
+    wrap.classList.remove('shake'); void wrap.offsetWidth; wrap.classList.add('shake');
+    pinBuffer='';
+    renderPinDots();
+  }
+}
+function showLockScreen(){
+  cryptoKey = null;
+  pinBuffer='';
+  showScreen('lockScreen');
+  renderKeypad();
+  renderPinDots();
+  document.getElementById('lockMsg').textContent='';
+  loadPinLength();
+}
+
+/* ---------------- Auto-lock / idle ---------------- */
+function resetIdleTimer(){
+  clearTimeout(idleTimer);
+  if(!cryptoKey) return;
+  if(autoLockMs>0){
+    idleTimer = setTimeout(()=>{ showLockScreen(); toast('Vault locked'); }, autoLockMs);
+  }
+}
+['touchstart','mousedown','keydown','scroll'].forEach(ev=>{
+  document.addEventListener(ev, ()=>{ if(cryptoKey) resetIdleTimer(); }, {passive:true});
+});
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden && cryptoKey){ showLockScreen(); }
+});
+
+/* ---------------- Progress overlay ---------------- */
+function showProgress(msg){
+  document.getElementById('progressText').textContent = msg;
+  document.getElementById('progressBarFill').style.width='0%';
+  document.getElementById('progressOverlay').classList.add('active');
+}
+function setProgress(pct){ document.getElementById('progressBarFill').style.width = pct+'%'; }
+function hideProgress(){ document.getElementById('progressOverlay').classList.remove('active'); }
+
+/* ---------------- Main app entry ---------------- */
+async function enterMainApp(){
+  const albumsRow = await idbGet(STORE_META,'albums');
+  const albums = albumsRow ? albumsRow.value : ['All'];
+  const alRow = await idbGet(STORE_META,'autoLockMs');
+  autoLockMs = alRow ? alRow.value : 60000;
+  itemsCache = await idbAll(STORE_ITEMS);
+  currentAlbum = 'All';
+  showScreen('mainScreen');
+  renderAlbumChips(albums);
+  await renderGrid();
+  resetIdleTimer();
+}
+
+/* ---------------- Album chips ---------------- */
+async function getAlbums(){
+  const row = await idbGet(STORE_META,'albums');
+  return row ? row.value : ['All'];
+}
+async function setAlbums(list){
+  await idbPut(STORE_META, {key:'albums', value:list});
+}
+function renderAlbumChips(albums){
+  const wrap = document.getElementById('albumChips');
+  wrap.innerHTML='';
+  albums.forEach(a=>{
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (a===currentAlbum ? ' active':'');
+    chip.textContent = a;
+    chip.addEventListener('click', async ()=>{
+      currentAlbum = a;
+      renderAlbumChips(await getAlbums());
+      renderGrid();
+    });
+    wrap.appendChild(chip);
+  });
+  const addChip = document.createElement('button');
+  addChip.className = 'chip add-chip';
+  addChip.textContent = '+ new album';
+  addChip.addEventListener('click', openCreateAlbumSheet);
+  wrap.appendChild(addChip);
+}
+function openCreateAlbumSheet(){
+  openGenericSheet(`
+    <div class="sheet-handle"></div>
+    <h3>New album</h3>
+    <input type="text" id="newAlbumName" placeholder="e.g. Bengaluru trip" maxlength="24">
+    <div class="sheet-btn-row">
+      <button class="sheet-btn ghost" id="newAlbumCancel">Cancel</button>
+      <button class="sheet-btn primary" id="newAlbumCreate">Create</button>
+    </div>
+  `);
+  document.getElementById('newAlbumCancel').addEventListener('click', closeGenericSheet);
+  document.getElementById('newAlbumCreate').addEventListener('click', async ()=>{
+    const name = document.getElementById('newAlbumName').value.trim();
+    if(!name){ toast('Give the album a name'); return; }
+    const albums = await getAlbums();
+    if(albums.includes(name)){ toast('Album already exists'); return; }
+    albums.push(name);
+    await setAlbums(albums);
+    closeGenericSheet();
+    renderAlbumChips(albums);
+    toast('Album created');
+  });
+  document.getElementById('newAlbumName').focus();
+}
+
+/* ---------------- Grid rendering ---------------- */
+async function renderGrid(){
+  itemsCache = await idbAll(STORE_ITEMS);
+  let list = itemsCache.slice().sort((a,b)=>b.createdAt-a.createdAt);
+  if(currentAlbum !== 'All') list = list.filter(i=>i.album===currentAlbum);
+  if(searchTerm) list = list.filter(i=>i.nameLower.includes(searchTerm));
+
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('emptyState');
+  grid.innerHTML='';
+  if(list.length===0){
+    empty.classList.remove('hidden');
+    updateSettingsStats();
+    return;
+  }
+  empty.classList.add('hidden');
+
+  for(const item of list){
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.dataset.id = item.id;
+    const check = document.createElement('div');
+    check.className='sel-check';
+    check.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    tile.appendChild(check);
+
+    const ph = document.createElement('div');
+    ph.className='placeholder';
+    ph.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#3a3a40" stroke-width="1.5"/></svg>';
+    tile.appendChild(ph);
+
+    if(item.type==='video'){
+      const badge=document.createElement('div');
+      badge.className='vid-badge';
+      badge.innerHTML='<svg width="9" height="9" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>' + fmtTime(item.duration||0);
+      tile.appendChild(badge);
+    }
+
+    tile.addEventListener('click', ()=>{
+      if(selectMode) toggleSelect(item.id, tile);
+      else openViewer(item.id);
+    });
+    let pressTimer;
+    tile.addEventListener('touchstart', ()=>{ pressTimer = setTimeout(()=>enterSelectMode(item.id, tile), 450); }, {passive:true});
+    tile.addEventListener('touchend', ()=>clearTimeout(pressTimer));
+    tile.addEventListener('mousedown', ()=>{ pressTimer = setTimeout(()=>enterSelectMode(item.id, tile), 450); });
+    tile.addEventListener('mouseup', ()=>clearTimeout(pressTimer));
+
+    grid.appendChild(tile);
+    decryptThumbInto(item, tile, ph);
+  }
+  updateSettingsStats();
+}
+async function decryptThumbInto(item, tile, placeholderEl){
+  try{
+    const src = item.thumb || item.encrypted; // photos use full-res encrypted as thumb src; videos use captured poster
+    const buf = await decryptBytes(src.iv, src.data);
+    const blob = new Blob([buf], {type: item.thumb ? 'image/jpeg' : item.mime});
+    const url = URL.createObjectURL(blob);
+    currentObjectURLs.push(url);
+    if(!document.body.contains(tile)) { URL.revokeObjectURL(url); return; }
+    const img = document.createElement('img');
+    img.src = url;
+    img.loading = 'lazy';
+    placeholderEl.replaceWith(img);
+  }catch(e){
+    placeholderEl.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" stroke="#ea1b2d" stroke-width="1.5"/></svg>';
+  }
+}
+
+/* ---------------- Selection mode ---------------- */
+function enterSelectMode(firstId, tile){
+  selectMode = true;
+  selectedIds.clear();
+  document.getElementById('selectionBar').classList.remove('hidden');
+  toggleSelect(firstId, tile);
+}
+function toggleSelect(id, tile){
+  if(!selectMode){ selectMode = true; document.getElementById('selectionBar').classList.remove('hidden'); }
+  if(selectedIds.has(id)){ selectedIds.delete(id); tile.classList.remove('selected'); }
+  else { selectedIds.add(id); tile.classList.add('selected'); }
+  if(selectedIds.size===0) exitSelectMode();
+}
+function exitSelectMode(){
+  selectMode=false;
+  selectedIds.clear();
+  document.getElementById('selectionBar').classList.add('hidden');
+  document.querySelectorAll('.tile.selected').forEach(t=>t.classList.remove('selected'));
+}
+
+/* ---------------- Add media flow ---------------- */
+async function handleFilesSelected(fileList, kind){
+  const files = Array.from(fileList);
+  if(files.length===0) return;
+  const albumSel = document.getElementById('addAlbumSelect').value || 'All';
+  showProgress(`Encrypting ${files.length} item${files.length>1?'s':''}…`);
+  let done=0;
+  for(const file of files){
+    try{
+      await encryptAndStoreFile(file, kind, albumSel);
+    }catch(e){
+      console.error(e);
+      toast('Failed to add '+file.name);
+    }
+    done++;
+    setProgress(Math.round(done/files.length*100));
+  }
+  hideProgress();
+  toast(`Added ${done} item${done>1?'s':''} to the vault`);
+  if(!isNativeApp){
+    setTimeout(()=>toast('Tip: delete the originals from your phone gallery for full privacy'), 2500);
+  }
+  await renderGrid();
+}
+async function encryptAndStoreFile(file, kind, album){
+  const arrayBuffer = await file.arrayBuffer();
+  const encrypted = await encryptBytes(arrayBuffer);
+  const item = {
+    id: uid(),
+    name: file.name,
+    nameLower: file.name.toLowerCase(),
+    mime: file.type || (kind==='photo' ? 'image/jpeg' : 'video/mp4'),
+    type: kind,
+    album: album,
+    size: file.size,
+    createdAt: Date.now(),
+    encrypted: encrypted,
+    thumb: null,
+    duration: 0
+  };
+  if(kind==='video'){
+    try{
+      const {thumbBlob, duration} = await captureVideoPoster(file);
+      const thumbBuf = await thumbBlob.arrayBuffer();
+      item.thumb = await encryptBytes(thumbBuf);
+      item.duration = duration;
+    }catch(e){ /* poster capture optional */ }
+  }
+  await idbPut(STORE_ITEMS, item);
+}
+function captureVideoPoster(file){
+  return new Promise((resolve,reject)=>{
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.src = url; video.muted = true; video.playsInline = true;
+    video.addEventListener('loadeddata', ()=>{
+      video.currentTime = Math.min(1, (video.duration||1)/2);
+    });
+    video.addEventListener('seeked', ()=>{
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 320;
+      canvas.height = video.videoHeight || 240;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video,0,0,canvas.width,canvas.height);
+      canvas.toBlob(blob=>{
+        URL.revokeObjectURL(url);
+        resolve({thumbBlob: blob, duration: video.duration||0});
+      }, 'image/jpeg', 0.7);
+    });
+    video.addEventListener('error', ()=>{ URL.revokeObjectURL(url); reject(new Error('poster failed')); });
+    setTimeout(()=>reject(new Error('poster timeout')), 8000);
+  });
+}
+
+/* ---------------- Viewer (photo + video) ---------------- */
+async function openViewer(id){
+  releaseObjectURLs();
+  const all = itemsCache.slice().sort((a,b)=>b.createdAt-a.createdAt)
+    .filter(i=> currentAlbum==='All' || i.album===currentAlbum)
+    .filter(i=> !searchTerm || i.nameLower.includes(searchTerm));
+  viewerList = all;
+  viewerIndex = all.findIndex(i=>i.id===id);
+  if(viewerIndex<0) return;
+  showScreen('viewerScreen');
+  await renderViewerItem();
+}
+async function renderViewerItem(){
+  const item = viewerList[viewerIndex];
+  if(!item) return;
+  document.getElementById('viewerTitle').textContent = item.name;
+  const stage = document.getElementById('viewerStage');
+  stage.innerHTML = '';
+  showProgress('Decrypting…');
+  try{
+    const buf = await decryptBytes(item.encrypted.iv, item.encrypted.data);
+    const blob = new Blob([buf], {type:item.mime});
+    const url = URL.createObjectURL(blob);
+    currentObjectURLs.push(url);
+    hideProgress();
+
+    if(item.type==='photo'){
+      buildPhotoStage(stage, url);
+      document.getElementById('viewerBottom').classList.remove('hidden');
+    } else {
+      buildVideoStage(stage, url);
+      document.getElementById('viewerBottom').classList.add('hidden');
+    }
+    addSwipeNav(stage);
+  }catch(e){
+    hideProgress();
+    stage.innerHTML = '<p style="color:#fff;font-family:var(--font-mono);font-size:13px;">Could not decrypt this item.</p>';
+  }
+}
+function buildPhotoStage(stage, url){
+  const img = document.createElement('img');
+  img.src = url;
+  stage.appendChild(img);
+
+  let scale=1, panX=0, panY=0, rotate=0;
+  let startDist=0, startScale=1, lastX=0, lastY=0, isPanning=false;
+  function applyTransform(){ img.style.transform = `translate(${panX}px,${panY}px) scale(${scale}) rotate(${rotate}deg)`; }
+  img.addEventListener('touchstart', (e)=>{
+    if(e.touches.length===2){
+      startDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      startScale = scale;
+    } else if(e.touches.length===1 && scale>1){
+      isPanning=true; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
+    }
+  }, {passive:true});
+  img.addEventListener('touchmove', (e)=>{
+    if(e.touches.length===2){
+      const dist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      scale = Math.max(1, Math.min(4, startScale * (dist/startDist)));
+      applyTransform();
+    } else if(isPanning && e.touches.length===1){
+      const dx = e.touches[0].clientX-lastX, dy = e.touches[0].clientY-lastY;
+      panX += dx; panY += dy; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
+      applyTransform();
+    }
+  }, {passive:true});
+  img.addEventListener('touchend', ()=>{ isPanning=false; if(scale<=1){panX=0;panY=0;applyTransform();} });
+  img.addEventListener('dblclick', ()=>{ scale = scale>1?1:2; panX=0;panY=0; applyTransform(); });
+  img.addEventListener('wheel', (e)=>{
+    e.preventDefault();
+    scale = Math.max(1, Math.min(4, scale - e.deltaY*0.002));
+    if(scale<=1){panX=0;panY=0;}
+    applyTransform();
+  });
+  stage._rotateHandler = ()=>{ rotate=(rotate+90)%360; applyTransform(); };
+}
+function buildVideoStage(stage, url){
+  const wrap = document.createElement('div'); wrap.className='video-wrap';
+  const video = document.createElement('video');
+  video.src = url; video.playsInline=true; video.autoplay=true;
+  wrap.appendChild(video);
+
+  const centerBtn = document.createElement('button');
+  centerBtn.className='vid-play-center';
+  centerBtn.innerHTML = pauseIconSVG();
+  wrap.appendChild(centerBtn);
+
+  const controls = document.createElement('div'); controls.className='vid-controls';
+  controls.innerHTML = `
+    <input type="range" class="vid-seek" min="0" max="100" value="0" step="0.1">
+    <div class="vid-time-row"><span class="cur">0:00</span><span class="speed-badge">1x</span><span class="dur">0:00</span></div>
+    <div class="vid-btn-row">
+      <div class="vid-btn-group">
+        <button class="vid-btn" data-act="back10"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 8V4l-5 5 5 5V10a6 6 0 1 1-6 6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="vid-btn" data-act="playpause">${playIconSVG()}</button>
+        <button class="vid-btn" data-act="fwd10"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="transform:scaleX(-1)"><path d="M12 8V4l-5 5 5 5V10a6 6 0 1 1-6 6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="vid-btn-group">
+        <button class="vid-btn" data-act="speed"><span class="speed-label" style="font-family:var(--font-mono);font-size:12px;">1x</span></button>
+        <button class="vid-btn" data-act="mute"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M11 5L6 9H2v6h4l5 4V5z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M19 8a5 5 0 0 1 0 8M22 5a9 9 0 0 1 0 14" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+        <button class="vid-btn" data-act="fullscreen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m11-5v3a2 2 0 0 1-2 2h-3" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+  `;
+  wrap.appendChild(controls);
+  stage.appendChild(wrap);
+
+  const seek = controls.querySelector('.vid-seek');
+  const curEl = controls.querySelector('.cur');
+  const durEl = controls.querySelector('.dur');
+  const speedBadge = controls.querySelector('.speed-badge');
+  const speedLabel = controls.querySelector('.speed-label');
+  const playBtn = controls.querySelector('[data-act="playpause"]');
+  const muteBtn = controls.querySelector('[data-act="mute"]');
+  let speeds = [0.5,1,1.5,2]; let speedIdx=1;
+  let seeking=false;
+
+  function togglePlay(){
+    if(video.paused){ video.play(); } else { video.pause(); }
+  }
+  function syncPlayIcon(){
+    const icon = video.paused ? playIconSVG() : pauseIconSVG();
+    playBtn.innerHTML = icon;
+    centerBtn.innerHTML = icon;
+    centerBtn.style.opacity = video.paused ? '1' : '0';
+  }
+  video.addEventListener('play', syncPlayIcon);
+  video.addEventListener('pause', syncPlayIcon);
+  video.addEventListener('loadedmetadata', ()=>{ durEl.textContent = fmtTime(video.duration); });
+  video.addEventListener('timeupdate', ()=>{
+    if(!seeking){ seek.value = (video.currentTime/(video.duration||1))*100; }
+    curEl.textContent = fmtTime(video.currentTime);
+  });
+  seek.addEventListener('input', ()=>{ seeking=true; });
+  seek.addEventListener('change', ()=>{
+    video.currentTime = (seek.value/100)*video.duration;
+    seeking=false;
+  });
+  wrap.addEventListener('click', (e)=>{
+    if(e.target===wrap || e.target===video) togglePlay();
+  });
+  centerBtn.addEventListener('click', togglePlay);
+  controls.querySelector('[data-act="playpause"]').addEventListener('click', togglePlay);
+  controls.querySelector('[data-act="back10"]').addEventListener('click', ()=>{ video.currentTime = Math.max(0, video.currentTime-10); });
+  controls.querySelector('[data-act="fwd10"]').addEventListener('click', ()=>{ video.currentTime = Math.min(video.duration, video.currentTime+10); });
+  controls.querySelector('[data-act="speed"]').addEventListener('click', ()=>{
+    speedIdx = (speedIdx+1)%speeds.length;
+    video.playbackRate = speeds[speedIdx];
+    speedLabel.textContent = speeds[speedIdx]+'x';
+  });
+  muteBtn.addEventListener('click', ()=>{
+    video.muted = !video.muted;
+    muteBtn.style.opacity = video.muted ? '0.5':'1';
+  });
+  controls.querySelector('[data-act="fullscreen"]').addEventListener('click', ()=>{
+    if(wrap.requestFullscreen) wrap.requestFullscreen();
+    else if(video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+  });
+  syncPlayIcon();
+}
+function playIconSVG(){ return '<svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>'; }
+function pauseIconSVG(){ return '<svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>'; }
+
+function addSwipeNav(stage){
+  let startX=0, startY=0, moved=false;
+  stage.addEventListener('touchstart', (e)=>{
+    if(e.touches.length!==1) return;
+    startX=e.touches[0].clientX; startY=e.touches[0].clientY; moved=false;
+  }, {passive:true});
+  stage.addEventListener('touchend', (e)=>{
+    const dx = (e.changedTouches[0].clientX-startX);
+    const dy = Math.abs(e.changedTouches[0].clientY-startY);
+    if(Math.abs(dx)>70 && dy<60){
+      if(dx<0) viewerNav(1); else viewerNav(-1);
+    }
+  }, {passive:true});
+}
+async function viewerNav(dir){
+  const newIndex = viewerIndex+dir;
+  if(newIndex<0 || newIndex>=viewerList.length) return;
+  viewerIndex = newIndex;
+  await renderViewerItem();
+}
+
+/* ---------------- Viewer action buttons ---------------- */
+document.getElementById('viewerCloseBtn').addEventListener('click', ()=>{
+  releaseObjectURLs();
+  showScreen('mainScreen');
+  renderGrid();
+});
+document.getElementById('viewerRotateBtn').addEventListener('click', ()=>{
+  const stage = document.getElementById('viewerStage');
+  if(stage._rotateHandler) stage._rotateHandler();
+});
+document.getElementById('viewerDownloadBtn').addEventListener('click', async ()=>{
+  const item = viewerList[viewerIndex];
+  if(!item) return;
+  const buf = await decryptBytes(item.encrypted.iv, item.encrypted.data);
+  const blob = new Blob([buf], {type:item.mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = item.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  toast('Saved to your downloads');
+});
+document.getElementById('viewerDeleteBtn').addEventListener('click', ()=>{
+  const item = viewerList[viewerIndex];
+  if(!item) return;
+  confirmAction('Delete this item?', 'This cannot be undone once removed from the vault.', async ()=>{
+    await idbDelete(STORE_ITEMS, item.id);
+    viewerList.splice(viewerIndex,1);
+    toast('Deleted');
+    if(viewerList.length===0){
+      releaseObjectURLs(); showScreen('mainScreen'); renderGrid();
+    } else {
+      viewerIndex = Math.min(viewerIndex, viewerList.length-1);
+      renderViewerItem();
+    }
+  });
+});
+document.getElementById('viewerMoveBtn').addEventListener('click', async ()=>{
+  const item = viewerList[viewerIndex];
+  if(!item) return;
+  const albums = await getAlbums();
+  openGenericSheet(`
+    <div class="sheet-handle"></div>
+    <h3>Move to album</h3>
+    ${albums.map(a=>`<button class="sheet-row" style="width:100%;text-align:left;background:none;" data-album="${a}"><div class="label">${a}${a===item.album?' · current':''}</div></button>`).join('')}
+  `);
+  document.querySelectorAll('#genericSheetContent [data-album]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      item.album = btn.dataset.album;
+      await idbPut(STORE_ITEMS, item);
+      closeGenericSheet();
+      toast('Moved to '+item.album);
+    });
+  });
+});
+document.getElementById('viewerMoreBtn').addEventListener('click', ()=>{
+  const item = viewerList[viewerIndex];
+  if(!item) return;
+  openGenericSheet(`
+    <div class="sheet-handle"></div>
+    <h3>${item.name}</h3>
+    <div class="sheet-row"><div class="label">Type<div class="sub">${item.type==='video'?'Video':'Photo'} · ${item.mime}</div></div></div>
+    <div class="sheet-row"><div class="label">Size<div class="sub">${fmtBytes(item.size)}</div></div></div>
+    <div class="sheet-row"><div class="label">Added<div class="sub">${new Date(item.createdAt).toLocaleString()}</div></div></div>
+    <div class="sheet-row"><div class="label">Album<div class="sub">${item.album}</div></div></div>
+  `);
+});
+
+/* ---------------- Confirm dialog (generic sheet based) ---------------- */
+function confirmAction(title, sub, onConfirm){
+  openGenericSheet(`
+    <div class="sheet-handle"></div>
+    <h3>${title}</h3>
+    <p style="color:var(--muted);font-size:13.5px;line-height:1.5;margin:-8px 0 18px;">${sub}</p>
+    <div class="sheet-btn-row">
+      <button class="sheet-btn ghost" id="confirmCancel">Cancel</button>
+      <button class="sheet-btn primary" id="confirmOk" style="background:var(--crimson)">Confirm</button>
+    </div>
+  `);
+  document.getElementById('confirmCancel').addEventListener('click', closeGenericSheet);
+  document.getElementById('confirmOk').addEventListener('click', ()=>{ closeGenericSheet(); onConfirm(); });
+}
+
+/* ---------------- Generic sheet ---------------- */
+function openGenericSheet(html){
+  document.getElementById('genericSheetContent').innerHTML = html;
+  document.getElementById('genericSheetOverlay').classList.add('active');
+}
+function closeGenericSheet(){
+  document.getElementById('genericSheetOverlay').classList.remove('active');
+}
+document.getElementById('genericSheetOverlay').addEventListener('click', (e)=>{
+  if(e.target===document.getElementById('genericSheetOverlay')) closeGenericSheet();
+});
+
+/* ---------------- Selection bar actions ---------------- */
+document.getElementById('selCancelBtn').addEventListener('click', exitSelectMode);
+document.getElementById('selDeleteBtn').addEventListener('click', ()=>{
+  if(selectedIds.size===0) return;
+  confirmAction(`Delete ${selectedIds.size} item(s)?`, 'This cannot be undone.', async ()=>{
+    for(const id of selectedIds) await idbDelete(STORE_ITEMS, id);
+    toast('Deleted '+selectedIds.size+' items');
+    exitSelectMode();
+    renderGrid();
+  });
+});
+document.getElementById('selMoveBtn').addEventListener('click', async ()=>{
+  if(selectedIds.size===0) return;
+  const albums = await getAlbums();
+  openGenericSheet(`
+    <div class="sheet-handle"></div>
+    <h3>Move ${selectedIds.size} item(s)</h3>
+    ${albums.map(a=>`<button class="sheet-row" style="width:100%;text-align:left;background:none;" data-album="${a}"><div class="label">${a}</div></button>`).join('')}
+  `);
+  document.querySelectorAll('#genericSheetContent [data-album]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      for(const id of selectedIds){
+        const item = itemsCache.find(i=>i.id===id);
+        if(item){ item.album = btn.dataset.album; await idbPut(STORE_ITEMS, item); }
+      }
+      closeGenericSheet();
+      exitSelectMode();
+      toast('Moved');
+      renderGrid();
+    });
+  });
+});
+document.getElementById('selectModeBtn').addEventListener('click', ()=>{
+  if(selectMode) exitSelectMode();
+  else { selectMode=true; document.getElementById('selectionBar').classList.remove('hidden'); }
+});
+
+/* ---------------- Search ---------------- */
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchTerm = e.target.value.toLowerCase().trim();
+  renderGrid();
+});
+
+/* ---------------- Add sheet ---------------- */
+document.getElementById('addFab').addEventListener('click', async ()=>{
+  const albums = await getAlbums();
+  const sel = document.getElementById('addAlbumSelect');
+  sel.innerHTML = albums.map(a=>`<option value="${a}" ${a===currentAlbum?'selected':''}>${a}</option>`).join('');
+  document.getElementById('addSheetOverlay').classList.add('active');
+});
+document.getElementById('addCancelBtn').addEventListener('click', ()=>document.getElementById('addSheetOverlay').classList.remove('active'));
+document.getElementById('addSheetOverlay').addEventListener('click', (e)=>{
+  if(e.target===document.getElementById('addSheetOverlay')) document.getElementById('addSheetOverlay').classList.remove('active');
+});
+/* ---------------- Native app bridge (installed Android app only) ---------------- */
+const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
+async function nativePickAndImport(kind){
+  document.getElementById('addSheetOverlay').classList.remove('active');
+  const albumSel = document.getElementById('addAlbumSelect').value || 'All';
+  try{
+    const result = await window.Capacitor.Plugins.GalleryCleanup.pickMedia({ type: kind, allowMultiple: true });
+    const items = result.items || [];
+    if(items.length===0) return;
+    showProgress(`Encrypting ${items.length} item${items.length>1?'s':''}…`);
+    let done=0;
+    for(const nativeItem of items){
+      try{
+        const webPath = window.Capacitor.convertFileSrc(nativeItem.path);
+        const resp = await fetch(webPath);
+        const arrayBuffer = await resp.arrayBuffer();
+        const fauxFile = {
+          name: nativeItem.name,
+          type: nativeItem.mimeType,
+          size: nativeItem.size,
+          arrayBuffer: async () => arrayBuffer
+        };
+        await encryptAndStoreFile(fauxFile, kind==='image' ? 'photo' : 'video', albumSel);
+        // Ask Android to delete the original — this always shows the system's own
+        // confirmation dialog; the app cannot and does not delete anything silently.
+        try{ await window.Capacitor.Plugins.GalleryCleanup.deleteOriginal({id: nativeItem.id}); }
+        catch(e){ /* user may have declined the system dialog — vault copy is safe either way */ }
+      }catch(e){ console.error(e); }
+      done++; setProgress(Math.round(done/items.length*100));
+    }
+    hideProgress();
+    toast(`Added ${done} item${done>1?'s':''} — confirm the system prompt to remove originals`);
+    await renderGrid();
+  }catch(e){
+    hideProgress();
+    if(!e || e.message!=='cancelled') toast('Could not import from gallery');
+  }
+}
+
+document.getElementById('addPhotoOpt').addEventListener('click', ()=>{
+  if(isNativeApp) nativePickAndImport('image');
+  else document.getElementById('photoInput').click();
+});
+document.getElementById('addVideoOpt').addEventListener('click', ()=>{
+  if(isNativeApp) nativePickAndImport('video');
+  else document.getElementById('videoInput').click();
+});
+document.getElementById('photoInput').addEventListener('change', async (e)=>{
+  document.getElementById('addSheetOverlay').classList.remove('active');
+  await handleFilesSelected(e.target.files, 'photo');
+  e.target.value='';
+});
+document.getElementById('videoInput').addEventListener('change', async (e)=>{
+  document.getElementById('addSheetOverlay').classList.remove('active');
+  await handleFilesSelected(e.target.files, 'video');
+  e.target.value='';
+});
+
+/* ---------------- Bottom nav ---------------- */
+document.querySelectorAll('.nav-btn[data-nav]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const nav = btn.dataset.nav;
+    document.querySelectorAll('.nav-btn[data-nav]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    if(nav==='gallery'){ showScreen('mainScreen'); renderGrid(); }
+    else if(nav==='settings'){ openSettings(); }
+  });
+});
+document.getElementById('lockNowBtn').addEventListener('click', ()=>{ showLockScreen(); toast('Vault locked'); });
+document.getElementById('settingsBackBtn').addEventListener('click', ()=>{
+  showScreen('mainScreen');
+  document.querySelector('.nav-btn[data-nav="gallery"]').classList.add('active');
+  document.querySelector('.nav-btn[data-nav="settings"]').classList.remove('active');
+});
+
+/* ---------------- Settings screen ---------------- */
+async function openSettings(){
+  showScreen('settingsScreen');
+  await updateSettingsStats();
+  const alRow = await idbGet(STORE_META,'autoLockMs');
+  const ms = alRow ? alRow.value : 60000;
+  document.getElementById('autoLockSub').textContent = autoLockLabel(ms);
+  const albums = await getAlbums();
+  document.getElementById('albumCountSub').textContent = albums.length + (albums.length===1?' album':' albums');
+}
+function autoLockLabel(ms){
+  if(ms===0) return 'Never (not recommended)';
+  if(ms===15000) return 'After 15 seconds idle';
+  if(ms===60000) return 'After 1 minute idle';
+  if(ms===300000) return 'After 5 minutes idle';
+  return 'After '+Math.round(ms/1000)+'s idle';
+}
+async function updateSettingsStats(){
+  const items = await idbAll(STORE_ITEMS);
+  const photos = items.filter(i=>i.type==='photo').length;
+  const videos = items.filter(i=>i.type==='video').length;
+  const totalSize = items.reduce((s,i)=>s+(i.size||0),0);
+  const statItems = document.getElementById('statItems');
+  const statSize = document.getElementById('statSize');
+  if(statItems) statItems.textContent = `${photos} photos · ${videos} videos`;
+  if(statSize) statSize.textContent = fmtBytes(totalSize);
+}
+document.getElementById('changePinBtn').addEventListener('click', openChangePinSheet);
+function openChangePinSheet(){
+  openGenericSheet(`
+    <div class="sheet-handle"></div>
+    <h3>Change PIN</h3>
+    <span class="field-label">current pin</span>
+    <input type="password" inputmode="numeric" id="cpCurrent" maxlength="8">
+    <span class="field-label">new pin</span>
+    <input type="password" inputmode="numeric" id="cpNew" maxlength="8">
+    <span class="field-label">confirm new pin</span>
+    <input type="password" inputmode="numeric" id="cpConfirm" maxlength="8">
+    <div class="sheet-btn-row">
+      <button class="sheet-btn ghost" id="cpCancel">Cancel</button>
+      <button class="sheet-btn primary" id="cpSubmit">Update</button>
+    </div>
+  `);
+  document.getElementById('cpCancel').addEventListener('click', closeGenericSheet);
+  document.getElementById('cpSubmit').addEventListener('click', async ()=>{
+    const cur = document.getElementById('cpCurrent').value;
+    const next = document.getElementById('cpNew').value;
+    const confirm2 = document.getElementById('cpConfirm').value;
+    if(next.length<4){ toast('New PIN must be at least 4 digits'); return; }
+    if(next!==confirm2){ toast('New PINs do not match'); return; }
+    const saltRow = await idbGet(STORE_META,'salt');
+    const salt = new Uint8Array(b642buf(saltRow.value));
+    const curKey = await deriveKey(cur, salt);
+    const verifierRow = await idbGet(STORE_META,'verifier');
+    const prevKey = cryptoKey;
+    cryptoKey = curKey;
+    let ok=false;
+    try{ ok = (await decryptText(verifierRow.value.iv, verifierRow.value.data))==='rahasya-ok'; }catch(e){ ok=false; }
+    if(!ok){ cryptoKey=prevKey; toast('Current PIN is incorrect'); return; }
+    closeGenericSheet();
+    showProgress('Re-encrypting your vault…');
+    const newSalt = randBytes(16);
+    const newKey = await deriveKey(next, newSalt);
+    const allItems = await idbAll(STORE_ITEMS);
+    let i=0;
+    for(const item of allItems){
+      const plainMain = await decryptBytes(item.encrypted.iv, item.encrypted.data);
+      cryptoKey = newKey;
+      item.encrypted = await encryptBytes(plainMain);
+      cryptoKey = curKey;
+      if(item.thumb){
+        const plainThumb = await decryptBytes(item.thumb.iv, item.thumb.data);
+        cryptoKey = newKey;
+        item.thumb = await encryptBytes(plainThumb);
+        cryptoKey = curKey;
+      }
+      cryptoKey = newKey;
+      await idbPut(STORE_ITEMS, item);
+      cryptoKey = curKey;
+      i++; setProgress(Math.round(i/allItems.length*100));
+    }
+    cryptoKey = newKey;
+    const newVerifier = await encryptText('rahasya-ok');
+    await idbPut(STORE_META, {key:'salt', value: buf2b64(newSalt)});
+    await idbPut(STORE_META, {key:'verifier', value: newVerifier});
+    await idbPut(STORE_META, {key:'pinLength', value: next.length});
+    storedPinLength = next.length;
+    hideProgress();
+    toast('PIN updated');
+  });
+}
+document.getElementById('autoLockBtn').addEventListener('click', ()=>{
+  openGenericSheet(`
+    <div class="sheet-handle"></div>
+    <h3>Auto-lock timing</h3>
+    <button class="sheet-row" style="width:100%;text-align:left;background:none;" data-ms="15000"><div class="label">15 seconds</div></button>
+    <button class="sheet-row" style="width:100%;text-align:left;background:none;" data-ms="60000"><div class="label">1 minute</div></button>
+    <button class="sheet-row" style="width:100%;text-align:left;background:none;" data-ms="300000"><div class="label">5 minutes</div></button>
+    <button class="sheet-row" style="width:100%;text-align:left;background:none;" data-ms="0"><div class="label">Never <span style="color:var(--crimson)">(not recommended)</span></div></button>
+  `);
+  document.querySelectorAll('#genericSheetContent [data-ms]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      autoLockMs = parseInt(btn.dataset.ms,10);
+      await idbPut(STORE_META, {key:'autoLockMs', value:autoLockMs});
+      resetIdleTimer();
+      closeGenericSheet();
+      document.getElementById('autoLockSub').textContent = autoLockLabel(autoLockMs);
+      toast('Auto-lock updated');
+    });
+  });
+});
+document.getElementById('manageAlbumsBtn').addEventListener('click', async ()=>{
+  const albums = await getAlbums();
+  openGenericSheet(`
+    <div class="sheet-handle"></div>
+    <h3>Albums</h3>
+    ${albums.map(a=>`<div class="sheet-row"><div class="label">${a}</div>${a!=='All'?`<button class="viewer-icon-btn" style="background:var(--panel-2);color:var(--crimson)" data-del-album="${a}">✕</button>`:''}</div>`).join('')}
+    <button class="sheet-btn primary" id="addAlbumFromSettings" style="width:100%;margin-top:14px;">+ New album</button>
+  `);
+  document.getElementById('addAlbumFromSettings').addEventListener('click', ()=>{ closeGenericSheet(); openCreateAlbumSheet(); });
+  document.querySelectorAll('#genericSheetContent [data-del-album]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const name = btn.dataset.delAlbum;
+      confirmAction('Delete album "'+name+'"?', 'Items inside will move back to "All", not be deleted.', async ()=>{
+        const items = await idbAll(STORE_ITEMS);
+        for(const it of items){ if(it.album===name){ it.album='All'; await idbPut(STORE_ITEMS,it); } }
+        const list = (await getAlbums()).filter(a=>a!==name);
+        await setAlbums(list);
+        closeGenericSheet();
+        toast('Album deleted');
+        renderAlbumChips(list);
+      });
+    });
+  });
+});
+
+/* ---------------- Export / Import ---------------- */
+document.getElementById('exportBtn').addEventListener('click', async ()=>{
+  showProgress('Preparing backup…');
+  const items = await idbAll(STORE_ITEMS);
+  const salt = await idbGet(STORE_META,'salt');
+  const verifier = await idbGet(STORE_META,'verifier');
+  const albums = await idbGet(STORE_META,'albums');
+  const payload = { version:1, exportedAt: Date.now(), salt, verifier, albums, items };
+  const json = JSON.stringify(payload);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `rahasya-backup-${stamp}.rahasya`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  hideProgress();
+  toast('Backup exported — keep it as safe as your PIN');
+});
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  const input = document.createElement('input');
+  input.type='file'; input.accept='.rahasya,application/json';
+  input.addEventListener('change', async ()=>{
+    const file = input.files[0];
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      if(!payload.items) throw new Error('bad file');
+      confirmAction('Import backup?', `This will merge ${payload.items.length} item(s) into your current vault. Items must have been encrypted with your current PIN to open correctly.`, async ()=>{
+        showProgress('Importing…');
+        let i=0;
+        for(const item of payload.items){
+          const newItem = Object.assign({}, item, {id: uid()});
+          await idbPut(STORE_ITEMS, newItem);
+          i++; setProgress(Math.round(i/payload.items.length*100));
+        }
+        if(payload.albums){
+          const cur = await getAlbums();
+          const merged = Array.from(new Set([...cur, ...payload.albums]));
+          await setAlbums(merged);
+        }
+        hideProgress();
+        toast('Backup imported');
+        renderGrid();
+        openSettings();
+      });
+    }catch(e){
+      toast('Could not read that backup file');
+    }
+  });
+  input.click();
+});
+
+/* ---------------- Wipe vault ---------------- */
+document.getElementById('wipeBtn').addEventListener('click', ()=>{
+  confirmAction('Erase the entire vault?', 'All photos, videos and albums will be permanently deleted. This cannot be undone.', ()=>{
+    confirmAction('Are you absolutely sure?', 'Type nothing — just confirm again to permanently erase everything.', async ()=>{
+      await idbClear(STORE_ITEMS);
+      await idbClear(STORE_META);
+      cryptoKey=null;
+      toast('Vault erased');
+      location.reload();
+    });
+  });
+});
+
+/* ---------------- Offline support (PWA) ---------------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* offline caching unavailable, app still works online */ });
+  });
+}
+
+/* ---------------- Boot ---------------- */
+async function boot(){
+  db = await openDB();
+  const saltRow = await idbGet(STORE_META,'salt');
+  if(!saltRow){
+    showScreen('setupScreen');
+    initSetupInput();
+  } else {
+    showLockScreen();
+  }
+}
+boot();
+
+})();
+</script>
+</body>
+</html>
